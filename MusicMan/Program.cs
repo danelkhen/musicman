@@ -5,6 +5,7 @@ using System.Linq;
 using System.Console;
 using System.Text;
 using System.Threading.Tasks;
+using System.Configuration;
 
 namespace MusicMan
 {
@@ -13,6 +14,7 @@ namespace MusicMan
         static string MusicDir = @"C:\Music";
         static void Main(string[] args)
         {
+            MusicDir = ConfigurationManager.AppSettings["MusicDir"] ?? MusicDir;
             var file = args[0].ToFileInfo();
             var queries = file.Lines().Where(t=>t.IsNotNullOrEmpty()).ToList();
             var results = queries.Select(q=> new QueryResult { Query = q, AlbumDir = FindAlbumDir(q) }).ToList();
