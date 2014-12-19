@@ -13,11 +13,12 @@ namespace MusicMan
         static string MusicDir = @"C:\Music";
         static void Main(string[] args)
         {
-            var queries = args[0].ToFileInfo().Lines().Where(t=>t.IsNotNullOrEmpty()).ToList();
+            var file = args[0].ToFileInfo();
+            var queries = file.Lines().Where(t=>t.IsNotNullOrEmpty()).ToList();
             var results = queries.Select(q=> new QueryResult { Query = q, AlbumDir = FindAlbumDir(q) }).ToList();
             var playlist = results.SelectMany(t => GetAudioFiles(t.AlbumDir)).ToList();
             playlist.ForEach(t=>WriteLine(t.FullName));
-            File.WriteAllLines("playlist.m3u", playlist.Select(t => t.FullName));
+            File.WriteAllLines(file.FullName+".m3u", playlist.Select(t => t.FullName));
         }
 
         static List<FileInfo> GetAudioFiles(DirectoryInfo dir)
