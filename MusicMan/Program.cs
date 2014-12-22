@@ -6,6 +6,7 @@ using System.Console;
 using System.Text;
 using System.Threading.Tasks;
 using System.Configuration;
+using Corex.IO.Tools;
 
 namespace MusicMan
 {
@@ -15,12 +16,40 @@ namespace MusicMan
         static void Main(string[] args)
         {
             MusicDir = ConfigurationManager.AppSettings["MusicDir"] ?? MusicDir;
-            var file = args[0].ToFileInfo();
+
+            var helper = new ToolArgsInfo<ProgramOptions>();
+            var options = helper.Parse(args);
+            if (options.Help)
+            {
+                WriteLine(helper.GenerateHelp());
+                return;
+            }
+
+            var file = options.InputFilename.ToFileInfo();
             var queries = file.Lines().Where(t=>t.IsNotNullOrEmpty()).ToList();
             var results = queries.Select(q=> new QueryResult { Query = q, AlbumDir = FindAlbumDir(q) }).ToList();
             var playlist = results.SelectMany(t => GetAudioFiles(t.AlbumDir)).ToList();
+            if (options.Random)
+            {
+                playlist = Randomize(playlist);
+            }
             playlist.ForEach(t=>WriteLine(t.FullName));
             File.WriteAllLines(file.FullName+".m3u", playlist.Select(t => t.FullName));
+        }
+
+        static Random Random = new Random();
+
+        private static List<T> Randomize<T>(List<T> list)
+        {
+            var list2 = new List<T>();
+            while (list.Count > 0)
+            {
+                var index = Random.Next(0, list.Count);
+                list2.Add(list[index]);
+                list.RemoveAt(index);
+            }
+            return list2;
+
         }
 
         static List<FileInfo> GetAudioFiles(DirectoryInfo dir)
@@ -59,6 +88,22 @@ namespace MusicMan
             return false;
 
         }
+    }
+
+
+    class ProgramOptions
+    {
+        [ToolArgCommand]
+        public string InputFilename { get; set; }
+
+        [ToolArgSwitch]
+        public bool Random { get; set; }
+
+        [ToolArgSwitch]
+        public bool Help { get; set; }
+
+
+
     }
 
 }
